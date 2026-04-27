@@ -100,6 +100,7 @@
     .stat-card.red    .stat-value { color:var(--red); }
     .stat-card.green  .stat-value { color:var(--green); }
     .stat-card.purple .stat-value { color:var(--purple); }
+    .stat-valor { font-size:12px; font-weight:600; color:var(--gray-600); margin-top:5px; border-top:1px solid var(--gray-100); padding-top:5px; }
 
     /* ── TOTALIZADORES CC ── */
     .cc-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:12px; margin-top:4px; }
@@ -292,21 +293,25 @@
           <div class="stat-label">Total</div>
           <div class="stat-value" id="st-total">—</div>
           <div class="stat-sub">despesas</div>
+          <div class="stat-valor" id="st-total-val">—</div>
         </div>
         <div class="stat-card orange">
           <div class="stat-label">A Vencer</div>
           <div class="stat-value" id="st-vencer">—</div>
           <div class="stat-sub">pendentes</div>
+          <div class="stat-valor" id="st-vencer-val">—</div>
         </div>
         <div class="stat-card red">
           <div class="stat-label">Vencidas</div>
           <div class="stat-value" id="st-vencidas">—</div>
           <div class="stat-sub">em atraso</div>
+          <div class="stat-valor" id="st-vencidas-val">—</div>
         </div>
         <div class="stat-card green">
           <div class="stat-label">Pagas</div>
           <div class="stat-value" id="st-pagas">—</div>
           <div class="stat-sub">quitadas</div>
+          <div class="stat-valor" id="st-pagas-val">—</div>
         </div>
       </div>
 
@@ -701,10 +706,22 @@ function updateStats() {
     if (filters.ano) partes.push(filters.ano);
     sub.textContent = partes.length ? partes.join('/') : 'todos os períodos';
   }
+
+  const vencerRows   = base.filter(r=>r._status==='A Vencer'||r._status==='Vence Hoje');
+  const vencidasRows = base.filter(r=>r._status==='Vencido');
+  const pagasRows    = base.filter(r=>r._status==='Pago');
+
+  const soma = rows => rows.reduce((s,r)=>s+parseMoeda(r['Valor']),0);
+
   document.getElementById('st-total').textContent    = base.length;
-  document.getElementById('st-vencer').textContent   = base.filter(r=>r._status==='A Vencer'||r._status==='Vence Hoje').length;
-  document.getElementById('st-vencidas').textContent = base.filter(r=>r._status==='Vencido').length;
-  document.getElementById('st-pagas').textContent    = base.filter(r=>r._status==='Pago').length;
+  document.getElementById('st-vencer').textContent   = vencerRows.length;
+  document.getElementById('st-vencidas').textContent = vencidasRows.length;
+  document.getElementById('st-pagas').textContent    = pagasRows.length;
+
+  document.getElementById('st-total-val').textContent    = fmtMoeda(soma(base));
+  document.getElementById('st-vencer-val').textContent   = fmtMoeda(soma(vencerRows));
+  document.getElementById('st-vencidas-val').textContent = fmtMoeda(soma(vencidasRows));
+  document.getElementById('st-pagas-val').textContent    = fmtMoeda(soma(pagasRows));
 }
 
 /* ══════════════════════════════════════════
