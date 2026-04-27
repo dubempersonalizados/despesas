@@ -113,11 +113,13 @@
     .alerta-card { border-radius:10px; padding:14px 16px; border-left:4px solid; }
     .alerta-card.hoje    { background:#FFFBEB; border-color:var(--yellow); }
     .alerta-card.proximo { background:#EFF6FF; border-color:var(--blue); }
+    .alerta-card.vencido { background:#FEF2F2; border-color:var(--red); }
     .alerta-card .alerta-nome { font-size:13px; font-weight:600; color:var(--navy); }
     .alerta-card .alerta-info { font-size:12px; color:var(--gray-600); margin-top:4px; display:flex; gap:12px; flex-wrap:wrap; }
     .alerta-card .alerta-dias { font-size:11px; font-weight:600; padding:2px 8px; border-radius:10px; }
     .alerta-card.hoje    .alerta-dias { background:var(--yellow-bg); color:#92400E; }
     .alerta-card.proximo .alerta-dias { background:var(--blue-bg);   color:#1D4ED8; }
+    .alerta-card.vencido .alerta-dias { background:var(--red-bg);    color:#991B1B; }
 
     /* ── FILTERS ── */
     .filters-row { display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:18px; padding:14px 18px; background:white; border-radius:12px; border:1px solid var(--gray-200); }
@@ -712,7 +714,7 @@ function updateAlertaBanner() {
   const alertas = allRows.filter(r => {
     if (r._status==='Pago') return false;
     const d = diasAteVencer(r['Vencimento']);
-    return d!==null && d>=0 && d<=3;
+    return d!==null && d<=3;
   });
   const banner = document.getElementById('alerta-banner');
   document.getElementById('alerta-count').textContent = alertas.length;
@@ -726,19 +728,19 @@ function renderAlertas() {
   const alertas = allRows.filter(r => {
     if (r._status==='Pago') return false;
     const d = diasAteVencer(r['Vencimento']);
-    return d!==null && d>=0 && d<=3;
+    return d!==null && d<=3;
   }).sort((a,b)=>diasAteVencer(a['Vencimento'])-diasAteVencer(b['Vencimento']));
 
   if (!alertas.length) {
     el.innerHTML=`<div style="display:flex;align-items:center;gap:10px;padding:10px 0;color:#065F46;font-size:13px">
-      <span style="font-size:22px">✅</span> Nenhuma despesa vencendo nos próximos 3 dias. Tudo em dia!
+      <span style="font-size:22px">✅</span> Nenhuma despesa vencida ou vencendo nos próximos 3 dias. Tudo em dia!
     </div>`; return;
   }
 
   el.innerHTML=`<div class="alertas-grid">${alertas.map(r=>{
     const d = diasAteVencer(r['Vencimento']);
-    const cls = d===0?'hoje':'proximo';
-    const diasTxt = d===0?'Vence HOJE':`${d} dia${d>1?'s':''}`;
+    const cls = d<0?'vencido':d===0?'hoje':'proximo';
+    const diasTxt = d<0?`Vencida há ${Math.abs(d)} dia${Math.abs(d)>1?'s':''}`:d===0?'Vence HOJE':`${d} dia${d>1?'s':''}`;
     const nomeEsc  = (r['Identificação da Despesa']||'').replace(/'/g,"\\'").replace(/"/g,'&quot;');
     const valorEsc = (r['Valor']||'').replace(/'/g,"\\'");
     const vencEsc  = (r['Vencimento']||'').replace(/'/g,"\\'");
