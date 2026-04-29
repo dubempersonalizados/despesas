@@ -264,7 +264,7 @@
                 <option>Encargos Trabalhistas</option><option>Internet</option><option>Água</option>
                 <option>Assessoria Contábil</option><option>Aluguel</option><option>Luz</option>
                 <option>Folha de Pagamento</option><option>Material de Expediente</option>
-                <option>Material de Limpeza</option><option>DAE</option><option>Outros</option>
+                <option>Material de Limpeza</option><option>DAE</option>
               </select>
               <button class="cc-add-btn" onclick="showCCModal()" title="Adicionar novo centro de custo">+</button>
             </div>
@@ -435,7 +435,7 @@
           <option>Encargos Trabalhistas</option><option>Internet</option><option>Água</option>
           <option>Assessoria Contábil</option><option>Aluguel</option><option>Luz</option>
           <option>Folha de Pagamento</option><option>Material de Expediente</option>
-          <option>Material de Limpeza</option><option>DAE</option><option>Outros</option>
+          <option>Material de Limpeza</option><option>DAE</option>
         </select>
       </div>
       <div class="form-group">
@@ -531,15 +531,60 @@ function fmtMoeda(n) {
   return 'R$ ' + n.toFixed(2).replace('.',',').replace(/\B(?=(\d{3})+(?!\d))/g,'.');
 }
 
-/* Garante que o valor sempre aparece como R$ 0,00 */
+/* Garante que o valor sempre aparece como R$ 0,00
+   Trata todos os formatos possíveis vindos do Google Sheets:
+   "2349.73"    → R$ 2.349,73  (ponto decimal, formato americano)
+   "2349,73"    → R$ 2.349,73  (vírgula decimal, formato BR sem milhar)
+   "2.349,73"   → R$ 2.349,73  (formato BR com milhar)
+   "2,349.73"   → R$ 2.349,73  (formato americano com milhar)
+   "R$ 2.349,73"→ R$ 2.349,73  (já formatado, mantém)
+   "120"        → R$ 120,00    (número inteiro)
+*/
 function normalizarValor(v) {
   if (!v || String(v).trim() === '') return '';
   const s = String(v).trim();
-  // Já está formatado com R$
+
+  // Já está formatado com R$ — retorna direto
   if (s.startsWith('R$')) return s;
-  // É número puro (ex: "120" ou "1703.39" ou "1703,39")
-  const n = parseFloat(s.replace(/\./g,'').replace(',','.'));
-  if (!isNaN(n)) return fmtMoeda(n);
+
+  // Remove espaços e caracteres não numéricos exceto ponto e vírgula
+  let limpo = s.replace(/[^\d.,]/g, '');
+
+  let n;
+
+  // Caso 1: tem vírgula E ponto → detecta qual é o separador decimal
+  if (limpo.includes('.') && limpo.includes(',')) {
+    const posUltimoPonto  = limpo.lastIndexOf('.');
+    const posUltimaVirgula = limpo.lastIndexOf(',');
+    if (posUltimaVirgula > posUltimoPonto) {
+      // Formato BR: 2.349,73 → vírgula é decimal
+      n = parseFloat(limpo.replace(/\./g, '').replace(',', '.'));
+    } else {
+      // Formato US: 2,349.73 → ponto é decimal
+      n = parseFloat(limpo.replace(/,/g, ''));
+    }
+  }
+  // Caso 2: só tem vírgula → vírgula é decimal (formato BR)
+  else if (limpo.includes(',') && !limpo.includes('.')) {
+    n = parseFloat(limpo.replace(',', '.'));
+  }
+  // Caso 3: só tem ponto
+  else if (limpo.includes('.') && !limpo.includes(',')) {
+    const partes = limpo.split('.');
+    if (partes.length === 2 && partes[1].length <= 2) {
+      // Ex: "2349.73" → ponto é decimal
+      n = parseFloat(limpo);
+    } else {
+      // Ex: "2.349" → ponto é milhar, sem centavos
+      n = parseFloat(limpo.replace(/\./g, ''));
+    }
+  }
+  // Caso 4: número inteiro puro "120"
+  else {
+    n = parseFloat(limpo);
+  }
+
+  if (!isNaN(n) && n >= 0) return fmtMoeda(n);
   return s;
 }
 
