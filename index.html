@@ -134,6 +134,13 @@
     .filter-chip.chip-pago.active    { background:var(--green); border-color:var(--green); }
     .filter-select-sm { height:36px; border:1.5px solid var(--gray-200); border-radius:22px; padding:0 14px; font-family:'DM Sans',sans-serif; font-size:12px; color:var(--gray-600); background:var(--gray-50); outline:none; cursor:pointer; transition:border-color .15s; }
     .filter-select-sm:focus { border-color:var(--orange); }
+    .search-wrap { position:relative; display:flex; align-items:center; }
+    .search-wrap svg { position:absolute; left:11px; pointer-events:none; color:var(--gray-400); }
+    .search-input { height:36px; border:1.5px solid var(--gray-200); border-radius:22px; padding:0 32px 0 34px; font-family:'DM Sans',sans-serif; font-size:12px; color:var(--navy); background:var(--gray-50); outline:none; width:200px; transition:border-color .15s,width .2s,box-shadow .15s; }
+    .search-input:focus { border-color:var(--orange); background:white; box-shadow:0 0 0 3px rgba(249,115,22,.10); width:260px; }
+    .search-input::placeholder { color:var(--gray-400); }
+    .search-clear { position:absolute; right:10px; background:none; border:none; cursor:pointer; color:var(--gray-400); font-size:15px; line-height:1; padding:0; display:none; }
+    .search-clear.visible { display:block; }
 
     /* ── TABLE ── */
     .table-wrap { overflow-x:auto; }
@@ -195,6 +202,27 @@
     .modal-info-box .lbl { color:var(--gray-400); font-size:11px; text-transform:uppercase; letter-spacing:.5px; }
     .modal-info-box .val { color:var(--navy); font-weight:500; }
     .modal-actions { display:flex; gap:10px; margin-top:22px; justify-content:flex-end; }
+
+    /* ── RECORRENTE ── */
+    .recorrente-box { background:var(--blue-bg); border:1.5px solid #BFDBFE; border-radius:10px; padding:14px 16px; margin-top:4px; display:none; }
+    .recorrente-box.visible { display:block; }
+    .recorrente-row { display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap; }
+    .toggle-rec { display:flex; align-items:center; gap:8px; cursor:pointer; user-select:none; font-size:13px; color:var(--navy); font-weight:500; }
+    .toggle-rec input[type=checkbox] { width:16px; height:16px; accent-color:var(--blue); cursor:pointer; }
+    .rec-badge { display:inline-flex; align-items:center; gap:4px; background:#DBEAFE; color:#1D4ED8; font-size:10px; font-weight:600; padding:2px 8px; border-radius:10px; }
+
+    /* ── HISTÓRICO MODAL ── */
+    .hist-list { list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:10px; max-height:400px; overflow-y:auto; }
+    .hist-item { background:var(--gray-50); border-radius:9px; padding:12px 14px; border-left:3px solid var(--orange); }
+    .hist-item.hist-criar  { border-color:var(--green); }
+    .hist-item.hist-editar { border-color:var(--blue); }
+    .hist-item.hist-pagar  { border-color:var(--green); }
+    .hist-item.hist-duplicar { border-color:var(--purple); }
+    .hist-item.hist-recorrente { border-color:#F59E0B; }
+    .hist-acao { font-size:12px; font-weight:600; color:var(--navy); }
+    .hist-data { font-size:11px; color:var(--gray-400); margin-top:2px; }
+    .hist-detalhe { font-size:12px; color:var(--gray-600); margin-top:6px; line-height:1.5; }
+    .hist-vazio { text-align:center; padding:30px; color:var(--gray-400); font-size:13px; }
 
     /* ── RESPONSIVE ── */
     @media(max-width:700px){
@@ -273,6 +301,26 @@
             <label class="form-label">Status (automático)</label>
             <div id="status-preview" class="status-preview status-vencer">● Defina a data de vencimento</div>
           </div>
+          <div class="form-group full">
+            <label class="toggle-rec">
+              <input type="checkbox" id="chk-recorrente" onchange="toggleRecorrente()">
+              🔁 Despesa recorrente (lançamento automático de parcelas)
+            </label>
+            <div class="recorrente-box" id="rec-box">
+              <div class="recorrente-row">
+                <div class="form-group" style="flex:1;min-width:140px">
+                  <label class="form-label">Nº de parcelas</label>
+                  <input type="number" class="form-input" id="rec-parcelas" min="2" max="60" value="12" placeholder="Ex: 12">
+                </div>
+                <div style="padding-bottom:10px;flex:2">
+                  <span class="rec-badge" id="rec-preview">📅 12 lançamentos mensais</span>
+                  <div style="font-size:11px;color:#1D4ED8;margin-top:6px">
+                    Os lançamentos serão criados mensalmente a partir da data de vencimento informada.
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
         <div class="form-actions">
           <button class="btn-primary" id="btn-salvar" onclick="salvarDespesa()">Salvar na Planilha</button>
@@ -316,6 +364,11 @@
       </div>
 
       <div class="filters-row">
+        <div class="search-wrap">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <input type="text" class="search-input" id="filter-busca" placeholder="Buscar despesa..." oninput="onBuscaInput(this)">
+          <button class="search-clear" id="btn-busca-clear" onclick="limparBusca()" title="Limpar busca">✕</button>
+        </div>
         <span class="filter-label">Status:</span>
         <button class="filter-chip active"       onclick="setFilter('status','todos',this)">Todos</button>
         <button class="filter-chip chip-vencer"  onclick="setFilter('status','A Vencer',this)">A Vencer</button>
@@ -468,6 +521,40 @@
   </div>
 </div>
 
+<!-- MODAL: DUPLICAR DESPESA -->
+<div id="modal-duplicar" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-title">📋 Duplicar Despesa</div>
+    <div class="modal-desc">Informe o novo vencimento para a cópia desta despesa.</div>
+    <div class="modal-info-box">
+      <span class="lbl">Despesa</span>  <span class="val" id="dup-nome">—</span>
+      <span class="lbl">Valor</span>    <span class="val" id="dup-valor">—</span>
+      <span class="lbl">CC</span>       <span class="val" id="dup-cc">—</span>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Novo Vencimento</label>
+      <input type="date" class="form-input" id="dup-vencimento">
+    </div>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeAllModals()">Cancelar</button>
+      <button class="btn-primary" id="btn-confirmar-dup" onclick="confirmarDuplicar()">📋 Duplicar</button>
+    </div>
+    <div class="msg" id="msg-modal-dup"></div>
+  </div>
+</div>
+
+<!-- MODAL: HISTÓRICO DE ALTERAÇÕES -->
+<div id="modal-historico" class="modal-overlay">
+  <div class="modal" style="width:520px">
+    <div class="modal-title">🕐 Histórico de Alterações</div>
+    <div class="modal-desc" id="hist-despesa-nome" style="font-weight:600;color:var(--navy);margin-bottom:14px"></div>
+    <ul class="hist-list" id="hist-list"></ul>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeAllModals()">Fechar</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL: NOVO CENTRO DE CUSTO -->
 <div id="modal-cc" class="modal-overlay">
   <div class="modal">
@@ -496,9 +583,19 @@ const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzTiZEXueaXs9-OAE71-
 let allRows      = [];
 let filteredRows = [];
 let pendingRow   = null;
-const filters    = { status:'todos', mes:'', ano:'' };
+const filters    = { status:'todos', mes:'', ano:'', busca:'' };
 const PER_PAGE   = 50;
 let currentPage  = 1;
+
+/* Histórico local (por sessão) */
+const historicoLocal = {};
+function addHistorico(rowId, acao, detalhe, tipo) {
+  if (!historicoLocal[rowId]) historicoLocal[rowId] = [];
+  historicoLocal[rowId].unshift({
+    acao, detalhe, tipo,
+    ts: new Date().toLocaleString('pt-BR')
+  });
+}
 
 /* ══════════════════════════════════════════
    NAVEGAÇÃO
@@ -685,6 +782,20 @@ async function loadData() {
   } catch(err) { renderError(err.message); }
 }
 
+function onBuscaInput(el) {
+  filters.busca = el.value;
+  currentPage = 1;
+  document.getElementById('btn-busca-clear').classList.toggle('visible', el.value.length > 0);
+  applyFiltersAndRender();
+}
+function limparBusca() {
+  document.getElementById('filter-busca').value = '';
+  document.getElementById('btn-busca-clear').classList.remove('visible');
+  filters.busca = '';
+  currentPage = 1;
+  applyFiltersAndRender();
+}
+
 /* ══════════════════════════════════════════
    FILTROS
 ══════════════════════════════════════════ */
@@ -698,6 +809,7 @@ function setFilter(tipo, valor, btn) {
 }
 
 function applyFiltersAndRender() {
+  const busca = filters.busca.toLowerCase().trim();
   filteredRows = allRows.filter(r => {
     if (filters.status!=='todos'&&r._status!==filters.status) return false;
     if (filters.mes||filters.ano) {
@@ -705,6 +817,12 @@ function applyFiltersAndRender() {
       const p=v.split('/'); if(p.length!==3) return false;
       if (filters.mes&&p[1].padStart(2,'0')!==filters.mes) return false;
       if (filters.ano&&p[2].trim()!==filters.ano) return false;
+    }
+    if (busca) {
+      const nome = (r['Identificação da Despesa']||'').toLowerCase();
+      const cc   = (r['Centro de Custo']||'').toLowerCase();
+      const val  = (r['Valor']||'').toLowerCase();
+      if (!nome.includes(busca) && !cc.includes(busca) && !val.includes(busca)) return false;
     }
     return true;
   });
@@ -934,6 +1052,7 @@ function renderTable() {
         <div class="actions-cell">
           ${btnPagar}
           <button class="action-btn blue" onclick="openEditarModal(${r._row})">✏️</button>
+          <button class="action-btn" style="border-color:var(--purple);color:var(--purple)" onclick="openDuplicarModal(${r._row})" title="Duplicar despesa">📋</button>
           <button class="action-btn red"  onclick="openExcluirModal(${r._row},'${nomeEsc}','${valorEsc}')">🗑️</button>
         </div>
       </td>
@@ -1096,6 +1215,7 @@ async function confirmarPagamento() {
     await fetch(SCRIPT_URL,{method:'POST',body:fd,mode:'no-cors'});
     const idx=allRows.findIndex(r=>r._row===pendingRow._row);
     if(idx!==-1){allRows[idx]['Data do Pagamento']=dataBR;allRows[idx]._status='Pago';}
+    addHistorico(pendingRow._row, '💳 Pagamento registrado', `Data de pagamento: ${dataBR}`, 'hist-pagar');
     closeAllModals(); updateStats(); applyFiltersAndRender(); renderAlertas(); renderCC(); updateAlertaBanner();
     showMsg('msg-gerenciar','✓ Pagamento registrado com sucesso!','success');
   } catch(e){ showMsg('msg-modal-pag','Erro ao salvar.','error'); }
@@ -1151,6 +1271,14 @@ async function confirmarEdicao() {
 
     const idx=allRows.findIndex(r=>r._row===pendingRow._row);
     if(idx!==-1){
+      const old = allRows[idx];
+      const mudancas = [];
+      if(old['Identificação da Despesa']!==nome) mudancas.push(`Nome: "${old['Identificação da Despesa']}" → "${nome}"`);
+      if(old['Valor']!==valor) mudancas.push(`Valor: ${old['Valor']} → ${valor}`);
+      if(old['Vencimento']!==vencBR) mudancas.push(`Vencimento: ${old['Vencimento']} → ${vencBR}`);
+      if(old['Centro de Custo']!==cc) mudancas.push(`CC: ${old['Centro de Custo']} → ${cc}`);
+      if(pagBR && old['Data do Pagamento']!==pagBR) mudancas.push(`Pagamento: ${pagBR}`);
+      addHistorico(pendingRow._row, '✏️ Despesa editada', mudancas.join(' | ')||'Sem alterações detectadas', 'hist-editar');
       allRows[idx]['Identificação da Despesa']=nome;
       allRows[idx]['Valor']=valor;
       allRows[idx]['Vencimento']=vencBR;
@@ -1197,18 +1325,59 @@ async function salvarDespesa() {
   const venc  = document.getElementById('inp-vencimento').value;
   const cc    = document.getElementById('inp-cc').value;
   if (!nome||!valor||!venc||!cc){ showMsg('msg-nova','Preencha todos os campos obrigatórios.','error'); return; }
+
+  const isRec  = document.getElementById('chk-recorrente').checked;
+  const nParc  = isRec ? Math.max(1, parseInt(document.getElementById('rec-parcelas').value)||1) : 1;
+
   const btn=document.getElementById('btn-salvar');
-  btn.disabled=true; btn.textContent='Salvando...';
-  const vencBR=venc.split('-').reverse().join('/');
+  btn.disabled=true;
+  btn.textContent = isRec ? `Salvando 1/${nParc}...` : 'Salvando...';
+
+  // Gera array de datas de vencimento
+  const [anoI,mesI,diaI] = venc.split('-').map(Number);
+  const vencimentos = [];
+  for (let i=0; i<nParc; i++) {
+    let m = mesI + i;
+    let a = anoI + Math.floor((m-1)/12);
+    m = ((m-1)%12)+1;
+    const ultimo = new Date(a, m, 0).getDate();
+    const d = Math.min(diaI, ultimo);
+    vencimentos.push(`${String(d).padStart(2,'0')}/${String(m).padStart(2,'0')}/${a}`);
+  }
+
+  let salvos=0;
   try {
-    const fd=new FormData();
-    fd.append('action','inserir'); fd.append('nome',nome); fd.append('valor',valor);
-    fd.append('vencimento',vencBR); fd.append('cc',cc); fd.append('status',calcStatus(vencBR,''));
-    await fetch(SCRIPT_URL,{method:'POST',body:fd,mode:'no-cors'});
-    showMsg('msg-nova','✓ Despesa salva! Acesse "Gerenciar" para visualizar.','success');
+    for (let i=0; i<vencimentos.length; i++) {
+      if (isRec) btn.textContent = `Salvando ${i+1}/${nParc}...`;
+      const nomeParcela = isRec && nParc>1 ? `${nome} (${i+1}/${nParc})` : nome;
+      const vencBR = vencimentos[i];
+      const fd=new FormData();
+      fd.append('action','inserir'); fd.append('nome',nomeParcela); fd.append('valor',valor);
+      fd.append('vencimento',vencBR); fd.append('cc',cc); fd.append('status',calcStatus(vencBR,''));
+      await fetch(SCRIPT_URL,{method:'POST',body:fd,mode:'no-cors'});
+      salvos++;
+    }
+    const msgOk = isRec && nParc>1
+      ? `✓ ${salvos} parcelas lançadas com sucesso! Acesse "Gerenciar" para visualizar.`
+      : '✓ Despesa salva! Acesse "Gerenciar" para visualizar.';
+    showMsg('msg-nova', msgOk, 'success');
     limparForm();
   } catch(e){ showMsg('msg-nova','Erro ao salvar.','error'); }
   btn.disabled=false; btn.textContent='Salvar na Planilha';
+}
+
+/* ══════════════════════════════════════════
+   RECORRENTE
+══════════════════════════════════════════ */
+function toggleRecorrente() {
+  const chk = document.getElementById('chk-recorrente');
+  const box = document.getElementById('rec-box');
+  box.classList.toggle('visible', chk.checked);
+  updateRecPreview();
+}
+function updateRecPreview() {
+  const n = parseInt(document.getElementById('rec-parcelas').value)||12;
+  document.getElementById('rec-preview').textContent = `📅 ${n} lançamento${n>1?'s':''} mensai${n>1?'s':''}`;
 }
 
 /* ══════════════════════════════════════════
@@ -1219,6 +1388,81 @@ function limparForm() {
   document.getElementById('inp-cc').value='';
   const sp=document.getElementById('status-preview');
   sp.innerHTML='● Defina a data de vencimento'; sp.className='status-preview status-vencer';
+  document.getElementById('chk-recorrente').checked=false;
+  document.getElementById('rec-box').classList.remove('visible');
+  document.getElementById('rec-parcelas').value='12';
+}
+
+/* ══════════════════════════════════════════
+   MODAL: DUPLICAR DESPESA
+══════════════════════════════════════════ */
+function openDuplicarModal(rowIdx) {
+  const r = allRows.find(x=>x._row===rowIdx);
+  if (!r) return;
+  pendingRow = { _row:rowIdx, _dupRow:r };
+  document.getElementById('dup-nome').textContent  = r['Identificação da Despesa']||'—';
+  document.getElementById('dup-valor').textContent = r['Valor']||'—';
+  document.getElementById('dup-cc').textContent    = r['Centro de Custo']||'—';
+  // Sugere próximo mês como padrão
+  const vencParts = (r['Vencimento']||'').split('/');
+  if (vencParts.length===3) {
+    let m = parseInt(vencParts[1])+1, a = parseInt(vencParts[2]);
+    if(m>12){m=1;a++;}
+    const ultimo = new Date(a,m,0).getDate();
+    const d = Math.min(parseInt(vencParts[0]),ultimo);
+    document.getElementById('dup-vencimento').value = `${a}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+  } else {
+    document.getElementById('dup-vencimento').value = new Date().toISOString().split('T')[0];
+  }
+  document.getElementById('msg-modal-dup').className='msg';
+  document.getElementById('modal-duplicar').classList.add('open');
+}
+
+async function confirmarDuplicar() {
+  const r = pendingRow?._dupRow;
+  if (!r) return;
+  const di = document.getElementById('dup-vencimento').value;
+  if (!di) { showMsg('msg-modal-dup','Informe a data de vencimento.','error'); return; }
+  const btn = document.getElementById('btn-confirmar-dup');
+  btn.disabled=true; btn.textContent='Duplicando...';
+  const vencBR = di.split('-').reverse().join('/');
+  const nome = r['Identificação da Despesa']||'';
+  const valor = r['Valor']||'';
+  const cc    = r['Centro de Custo']||'';
+  try {
+    const fd=new FormData();
+    fd.append('action','inserir'); fd.append('nome',nome); fd.append('valor',valor);
+    fd.append('vencimento',vencBR); fd.append('cc',cc); fd.append('status',calcStatus(vencBR,''));
+    await fetch(SCRIPT_URL,{method:'POST',body:fd,mode:'no-cors'});
+    // Adiciona no histórico da original
+    addHistorico(pendingRow._row, '📋 Despesa duplicada', `Nova cópia com vencimento ${vencBR}`, 'hist-duplicar');
+    closeAllModals();
+    showMsg('msg-gerenciar', `✓ Despesa duplicada com vencimento ${vencBR}!`, 'success');
+    setTimeout(()=>loadData(), 1200);
+  } catch(e){ showMsg('msg-modal-dup','Erro ao duplicar.','error'); }
+  btn.disabled=false; btn.textContent='📋 Duplicar';
+}
+
+/* ══════════════════════════════════════════
+   MODAL: HISTÓRICO
+══════════════════════════════════════════ */
+function openHistoricoModal(rowIdx, nomeEsc) {
+  const lista = historicoLocal[rowIdx] || [];
+  document.getElementById('hist-despesa-nome').textContent = nomeEsc || '—';
+  const ul = document.getElementById('hist-list');
+  if (!lista.length) {
+    ul.innerHTML = `<li class="hist-vazio">📭 Nenhuma alteração registrada nesta sessão.<br><small style="color:var(--gray-400);font-size:11px">O histórico é registrado a partir das ações realizadas enquanto a página está aberta.</small></li>`;
+  } else {
+    ul.innerHTML = lista.map(h=>`
+      <li class="hist-item ${h.tipo||''}">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+          <div class="hist-acao">${h.acao}</div>
+          <div class="hist-data">${h.ts}</div>
+        </div>
+        ${h.detalhe ? `<div class="hist-detalhe">${h.detalhe}</div>` : ''}
+      </li>`).join('');
+  }
+  document.getElementById('modal-historico').classList.add('open');
 }
 
 /* ══════════════════════════════════════════
@@ -1261,6 +1505,9 @@ function showMsg(id,text,type) {
 document.querySelectorAll('.modal-overlay').forEach(o=>{
   o.addEventListener('click',e=>{if(e.target===o)closeAllModals();});
 });
+
+/* Atualiza preview de recorrente ao mudar parcelas */
+document.getElementById('rec-parcelas').addEventListener('input', updateRecPreview);
 
 /* ══════════════════════════════════════════
    INIT
