@@ -224,6 +224,51 @@
     .hist-detalhe { font-size:12px; color:var(--gray-600); margin-top:6px; line-height:1.5; }
     .hist-vazio { text-align:center; padding:30px; color:var(--gray-400); font-size:13px; }
 
+    /* ── ESTOQUE ── */
+    .estoque-header { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; margin-bottom:20px; }
+    .estoque-title { font-family:'Syne',sans-serif; font-size:18px; font-weight:700; color:var(--navy); }
+    .estoque-sub { font-size:12px; color:var(--gray-400); margin-top:3px; }
+    .estoque-search-wrap { position:relative; display:flex; align-items:center; }
+    .estoque-search-wrap svg { position:absolute; left:11px; color:var(--gray-400); pointer-events:none; }
+    .estoque-search { border:1.5px solid var(--gray-200); border-radius:8px; padding:8px 12px 8px 34px; font-size:13px; width:240px; outline:none; font-family:'DM Sans',sans-serif; transition:border .18s; }
+    .estoque-search:focus { border-color:var(--blue); }
+    .estoque-stats { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:18px; }
+    .est-stat { background:white; border-radius:10px; padding:12px 18px; border:1.5px solid var(--gray-200); flex:1; min-width:120px; }
+    .est-stat-label { font-size:11px; color:var(--gray-400); font-weight:500; text-transform:uppercase; letter-spacing:.5px; }
+    .est-stat-val { font-family:'Syne',sans-serif; font-size:22px; font-weight:700; color:var(--navy); margin-top:4px; }
+    .est-stat.baixo .est-stat-val { color:var(--red); }
+    .est-stat.ok .est-stat-val { color:var(--green); }
+    .estoque-table-wrap { background:white; border-radius:14px; border:1.5px solid var(--gray-200); overflow:hidden; }
+    .estoque-table { width:100%; border-collapse:collapse; font-size:13px; }
+    .estoque-table th { background:var(--navy); color:white; padding:11px 14px; text-align:left; font-family:'Syne',sans-serif; font-size:12px; font-weight:600; letter-spacing:.3px; }
+    .estoque-table td { padding:11px 14px; border-bottom:1px solid var(--gray-100); color:var(--navy); vertical-align:middle; }
+    .estoque-table tr:last-child td { border-bottom:none; }
+    .estoque-table tr:hover td { background:var(--gray-50); }
+    .estoque-badge { display:inline-flex; align-items:center; padding:3px 10px; border-radius:20px; font-size:11px; font-weight:600; white-space:nowrap; }
+    .badge-ok   { background:var(--green-bg); color:#065F46; }
+    .badge-baixo{ background:var(--yellow-bg); color:#92400E; }
+    .badge-zero { background:var(--red-bg); color:#991B1B; }
+    .est-stat.zero { border-color:var(--red); }
+    .est-stat.zero .est-stat-val { color:var(--red); }
+
+    /* Cards de valor por departamento */
+    .dep-section { width:100%; margin-top:18px; }
+    .dep-title { font-size:13px; font-weight:600; color:var(--navy); margin-bottom:10px; }
+    .dep-grid { display:flex; flex-wrap:wrap; gap:10px; }
+    .dep-card { background:white; border:1.5px solid var(--border); border-radius:10px; padding:12px 16px; min-width:150px; flex:1; }
+    .dep-nome { font-size:12px; color:var(--gray-400); font-weight:500; margin-bottom:4px; }
+    .dep-val  { font-size:18px; font-weight:700; color:var(--navy); }
+    .dep-pct  { font-size:11px; color:var(--gray-400); margin-top:2px; }
+    .dep-total{ margin-top:10px; font-size:13px; color:var(--gray-600); text-align:right; }
+    .est-badge-ok   { background:var(--green-bg); color:#065F46; padding:3px 10px; border-radius:10px; font-size:11px; font-weight:600; }
+    .est-badge-baixo{ background:var(--red-bg);   color:#991B1B; padding:3px 10px; border-radius:10px; font-size:11px; font-weight:600; }
+    .est-badge-zero { background:#FEF3C7;          color:#92400E; padding:3px 10px; border-radius:10px; font-size:11px; font-weight:600; }
+    .est-update { display:flex; align-items:center; gap:8px; font-size:11px; color:var(--gray-400); }
+    .btn-reload { background:transparent; border:1.5px solid var(--gray-200); color:var(--gray-600); border-radius:7px; padding:6px 12px; font-size:12px; cursor:pointer; display:flex; align-items:center; gap:5px; transition:all .18s; }
+    .btn-reload:hover { border-color:var(--blue); color:var(--blue); }
+    .btn-reload.spinning svg { animation:spin .7s linear infinite; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+
     /* ── RESPONSIVE ── */
     @media(max-width:700px){
       .header{padding:12px 16px;flex-wrap:wrap;gap:10px;}
@@ -253,6 +298,7 @@
         <button class="nav-btn active" onclick="showSection('nova',this)">+ Nova Despesa</button>
         <button class="nav-btn" onclick="showSection('gerenciar',this)">Gerenciar</button>
         <button class="nav-btn" onclick="showSection('relatorios',this)">Relatórios</button>
+        <button class="nav-btn" onclick="showSection('estoque',this)">📦 Estoque</button>
       </nav>
     </div>
   </header>
@@ -438,6 +484,32 @@
 
     </div>
 
+    <!-- ══ ESTOQUE ══ -->
+    <div id="sec-estoque" class="section">
+      <div class="card">
+        <div class="estoque-header">
+          <div>
+            <div class="estoque-title">📦 Consulta de Estoque</div>
+            <div class="estoque-sub" id="estoque-atualizado">Dados carregados da planilha</div>
+          </div>
+          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+            <div class="estoque-search-wrap">
+              <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+              <input type="text" class="estoque-search" id="estoque-busca" placeholder="Buscar produto..." oninput="filtrarEstoque(this.value)">
+            </div>
+            <button class="btn-reload" id="btn-reload-estoque" onclick="loadEstoque(true)" title="Atualizar dados">
+              <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
+              Atualizar
+            </button>
+          </div>
+        </div>
+        <div class="estoque-stats" id="estoque-stats"></div>
+        <div class="estoque-table-wrap">
+          <div id="estoque-container"><div class="state-box" style="padding:40px"><div class="spinner"></div></div></div>
+        </div>
+      </div>
+    </div>
+
   </div><!-- /content -->
 </div><!-- /app -->
 
@@ -609,6 +681,7 @@ function showSection(s, btn) {
     if (!allRows.length) loadData();
     else { renderAlertas(); renderCC(); }
   }
+  if (s === 'estoque') loadEstoque(false);
 }
 
 /* ══════════════════════════════════════════
@@ -1508,6 +1581,178 @@ document.querySelectorAll('.modal-overlay').forEach(o=>{
 
 /* Atualiza preview de recorrente ao mudar parcelas */
 document.getElementById('rec-parcelas').addEventListener('input', updateRecPreview);
+
+/* ══════════════════════════════════════════
+   ESTOQUE
+══════════════════════════════════════════ */
+const ESTOQUE_URL = 'https://script.google.com/macros/s/AKfycbzZZY0Stu6KeaM-6t2SAM91hA5HdQ1twcp2hjIxoQFVkT57lhEiuEA9BctOTVolWxwU/exec';
+let estoqueRows = [];
+let estoqueLoaded = false;
+
+function parseCSVEstoque(text) {
+  const lines = text.trim().split(/\r?\n/);
+  if (lines.length < 2) return [];
+
+  // Parser robusto para campos com aspas e vírgulas internas
+  function parseLine(line) {
+    const cols = [];
+    let cur = '', inQ = false;
+    for (let i = 0; i < line.length; i++) {
+      const c = line[i];
+      if (c === '"') { inQ = !inQ; }
+      else if (c === ',' && !inQ) { cols.push(cur.trim()); cur = ''; }
+      else { cur += c; }
+    }
+    cols.push(cur.trim());
+    return cols;
+  }
+
+  const headers = parseLine(lines[0]).map(h => h.replace(/^"|"$/g,'').trim());
+
+  return lines.slice(1).map(line => {
+    const cols = parseLine(line);
+    const obj = {};
+    headers.forEach((h, i) => {
+      if (h) obj[h] = (cols[i] || '').replace(/^"|"$/g,'').trim();
+    });
+    return obj;
+  }).filter(r => r['Item'] && r['Item'].length > 0);
+}
+
+
+function calcBadge(qtd, min) {
+  const q = parseFloat(String(qtd).replace(',','.')) || 0;
+  const m = parseFloat(String(min).replace(',','.')) || 0;
+  if (q === 0) return '<span class="est-badge-zero">⚠️ Zerado</span>';
+  if (m > 0 && q <= m) return '<span class="est-badge-baixo">🔴 Baixo</span>';
+  return '<span class="est-badge-ok">✅ OK</span>';
+}
+
+function renderEstoqueTable(rows) {
+  if (!rows.length) {
+    document.getElementById('estoque-container').innerHTML =
+      '<div class="state-box" style="padding:40px;text-align:center;color:var(--gray-400)">Nenhum produto encontrado.</div>';
+    return;
+  }
+
+  // Stats usando coluna Status real
+  let confortavel=0, baixo=0, semEstoque=0;
+  rows.forEach(r => {
+    const s = (r['Status']||'').trim();
+    if (s === 'Sem Estoque') semEstoque++;
+    else if (s === 'Estoque Baixo') baixo++;
+    else confortavel++;
+  });
+
+  // Valor financeiro por departamento
+  const deptos = {};
+  rows.forEach(r => {
+    const dep = (r['Departamento']||'Sem Departamento').trim();
+    const valStr = String(r['Valor em Estoque']||'0')
+      .replace('R$','').replace(/\./g,'').replace(',','.').trim();
+    const val = parseFloat(valStr) || 0;
+    deptos[dep] = (deptos[dep] || 0) + val;
+  });
+  const totalGeral = Object.values(deptos).reduce((a,b)=>a+b,0);
+  const fmtBRL = v => v.toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+
+  const depHtml = Object.entries(deptos)
+    .sort((a,b) => b[1]-a[1])
+    .map(([dep, val]) => `
+      <div class="dep-card">
+        <div class="dep-nome">${dep}</div>
+        <div class="dep-val">${fmtBRL(val)}</div>
+        <div class="dep-pct">${totalGeral>0?((val/totalGeral)*100).toFixed(1)+'% do total':''}</div>
+      </div>`).join('');
+
+  document.getElementById('estoque-stats').innerHTML = `
+    <div class="est-stat ok"><div class="est-stat-label">✅ Estoque Confortável</div><div class="est-stat-val">${confortavel}</div></div>
+    <div class="est-stat baixo"><div class="est-stat-label">⚠️ Estoque Baixo</div><div class="est-stat-val">${baixo}</div></div>
+    <div class="est-stat zero"><div class="est-stat-label">❌ Sem Estoque</div><div class="est-stat-val">${semEstoque}</div></div>
+    <div class="est-stat"><div class="est-stat-label">📦 Total de Itens</div><div class="est-stat-val">${rows.length}</div></div>
+    <div class="dep-section">
+      <div class="dep-title">💰 Valor em Estoque por Departamento</div>
+      <div class="dep-grid">${depHtml}</div>
+      <div class="dep-total">Total geral: <strong>${fmtBRL(totalGeral)}</strong></div>
+    </div>
+  `;
+
+  // Badge visual por status
+  function badge(status) {
+    const s = (status||'').trim();
+    if (s === 'Sem Estoque')         return `<span class="estoque-badge badge-zero">❌ Sem Estoque</span>`;
+    if (s === 'Estoque Baixo')       return `<span class="estoque-badge badge-baixo">⚠️ Estoque Baixo</span>`;
+    if (s === 'Estoque Confortável') return `<span class="estoque-badge badge-ok">✅ Confortável</span>`;
+    return `<span class="estoque-badge">${s||'—'}</span>`;
+  }
+
+  let html = `<table class="estoque-table"><thead><tr>
+    <th>Item</th><th>Unidade</th>
+    <th>Qtd</th><th>Valor em Estoque</th>
+    <th>Última Compra</th><th>Status</th>
+  </tr></thead><tbody>`;
+
+  // Agrupa por departamento
+  const grupos = {};
+  rows.forEach(r => {
+    const dep = (r['Departamento']||'Sem Departamento').trim();
+    if (!grupos[dep]) grupos[dep] = [];
+    grupos[dep].push(r);
+  });
+
+  Object.entries(grupos).sort((a,b)=>a[0].localeCompare(b[0])).forEach(([dep, itens]) => {
+    html += `<tr><td colspan="6" style="background:var(--blue-bg);color:var(--navy);font-weight:700;font-size:13px;padding:10px 14px;border-bottom:2px solid var(--blue)">🏷️ ${dep} <span style="font-weight:400;font-size:12px;color:var(--gray-400)">(${itens.length} ${itens.length===1?'item':'itens'})</span></td></tr>`;
+    itens.forEach(r => {
+      const s = (r['Status']||'').trim();
+      const rowStyle = s==='Sem Estoque' ? 'background:#FFF5F5' : s==='Estoque Baixo' ? 'background:#FFFBEB' : '';
+      const qtd = r['Quantidade Estoque']||'0';
+      html += `<tr style="${rowStyle}">
+        <td style="font-weight:500">${r['Item']||'—'}</td>
+        <td>${r['Unidade']||'—'}</td>
+        <td style="font-weight:600;text-align:center">${qtd}</td>
+        <td>${r['Valor em Estoque']||'—'}</td>
+        <td>${r['Última Compra']||'—'}</td>
+        <td>${badge(s)}</td>
+      </tr>`;
+    });
+  });
+  html += '</tbody></table>';
+  document.getElementById('estoque-container').innerHTML = html;
+}
+
+async function loadEstoque(force=false) {
+  if (estoqueLoaded && !force) return;
+  const btn = document.getElementById('btn-reload-estoque');
+  if (btn) btn.classList.add('spinning');
+  document.getElementById('estoque-container').innerHTML =
+    '<div class="state-box" style="padding:40px"><div class="spinner"></div></div>';
+  document.getElementById('estoque-stats').innerHTML = '';
+  try {
+    const res  = await fetch(ESTOQUE_URL + '?action=estoque', { cache: 'no-store' });
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.msg || 'Erro no servidor');
+    const itens = data.itens || [];
+    if (!itens.length) throw new Error('Nenhum item retornado. Verifique se a aba "estoque" existe na planilha.');
+    estoqueRows  = itens;
+    estoqueLoaded = true;
+    const now = new Date().toLocaleString('pt-BR');
+    document.getElementById('estoque-atualizado').textContent = `Última atualização: ${now}`;
+    renderEstoqueTable(estoqueRows);
+  } catch(e) {
+    document.getElementById('estoque-container').innerHTML =
+      `<div class="state-box" style="padding:40px;text-align:center;color:var(--red)">❌ Erro ao carregar estoque.<br><small style="color:var(--gray-400);font-size:11px;margin-top:6px;display:block;max-width:480px;margin-left:auto;margin-right:auto">${e.message}</small></div>`;
+  }
+  if (btn) btn.classList.remove('spinning');
+}
+
+function filtrarEstoque(q) {
+  if (!estoqueRows.length) return;
+  const busca = q.toLowerCase().trim();
+  const filtered = busca
+    ? estoqueRows.filter(r => Object.values(r).some(v => String(v).toLowerCase().includes(busca)))
+    : estoqueRows;
+  renderEstoqueTable(filtered);
+}
 
 /* ══════════════════════════════════════════
    INIT
