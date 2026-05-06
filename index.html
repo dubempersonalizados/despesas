@@ -269,6 +269,22 @@
     .btn-reload.spinning svg { animation:spin .7s linear infinite; }
     @keyframes spin { to { transform:rotate(360deg); } }
 
+    /* ── REIMPRESSÕES ── */
+    .reimpress-stats { display:flex; flex-wrap:wrap; gap:12px; margin-bottom:18px; }
+    .reimpress-group { margin-bottom:28px; }
+    .reimpress-group-header { background:var(--blue-bg); border-left:4px solid var(--blue); border-radius:0 8px 8px 0; padding:10px 16px; margin-bottom:10px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px; }
+    .reimpress-group-title { font-size:14px; font-weight:700; color:var(--navy); }
+    .reimpress-group-badges { display:flex; gap:8px; flex-wrap:wrap; }
+    .reimpress-badge { display:inline-flex; align-items:center; gap:4px; background:white; border:1.5px solid var(--border); border-radius:20px; padding:3px 12px; font-size:12px; font-weight:600; color:var(--navy); }
+    .reimpress-badge.blue { border-color:var(--blue); color:var(--blue); background:#EFF6FF; }
+    .reimpress-badge.orange { border-color:var(--orange); color:var(--orange); background:#FFF7ED; }
+    .reimpress-table { width:100%; border-collapse:collapse; font-size:13px; }
+    .reimpress-table th { background:var(--gray-50); color:var(--gray-400); font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.5px; padding:10px 12px; text-align:left; border-bottom:1.5px solid var(--border); }
+    .reimpress-table td { padding:10px 12px; border-bottom:1px solid var(--border); color:var(--navy); vertical-align:top; }
+    .reimpress-table tr:last-child td { border-bottom:none; }
+    .reimpress-table tr:hover td { background:var(--gray-50); }
+    .reimpress-obs { font-size:11px; color:var(--gray-400); margin-top:3px; font-style:italic; }
+
     /* ── RESPONSIVE ── */
     @media(max-width:700px){
       .header{padding:12px 16px;flex-wrap:wrap;gap:10px;}
@@ -299,6 +315,7 @@
         <button class="nav-btn" onclick="showSection('gerenciar',this)">Gerenciar</button>
         <button class="nav-btn" onclick="showSection('relatorios',this)">Relatórios</button>
         <button class="nav-btn" onclick="showSection('estoque',this)">📦 Estoque</button>
+        <button class="nav-btn" onclick="showSection('reimpress',this)">🖨️ Reimpressões</button>
       </nav>
     </div>
   </header>
@@ -510,6 +527,38 @@
       </div>
     </div>
 
+    <!-- ══ REIMPRESSÕES ══ -->
+    <div id="sec-reimpress" class="section">
+      <div class="card">
+        <div class="estoque-header">
+          <div>
+            <div class="estoque-title">🖨️ Reimpressões</div>
+            <div class="estoque-sub" id="reimpress-atualizado">Dados carregados da planilha</div>
+          </div>
+          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+            <select class="filter-select-sm" id="reimpress-mes" onchange="filtrarReimpress()">
+              <option value="">Todos os meses</option>
+              <option value="01">Janeiro</option><option value="02">Fevereiro</option>
+              <option value="03">Março</option><option value="04">Abril</option>
+              <option value="05">Maio</option><option value="06">Junho</option>
+              <option value="07">Julho</option><option value="08">Agosto</option>
+              <option value="09">Setembro</option><option value="10">Outubro</option>
+              <option value="11">Novembro</option><option value="12">Dezembro</option>
+            </select>
+            <select class="filter-select-sm" id="reimpress-ano" onchange="filtrarReimpress()">
+              <option value="">Todos os anos</option>
+            </select>
+            <button class="btn-reload" id="btn-reload-reimpress" onclick="loadReimpress(true)" title="Atualizar dados">
+              <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
+              Atualizar
+            </button>
+          </div>
+        </div>
+        <div id="reimpress-stats"></div>
+        <div id="reimpress-container"><div class="state-box" style="padding:40px"><div class="spinner"></div></div></div>
+      </div>
+    </div>
+
   </div><!-- /content -->
 </div><!-- /app -->
 
@@ -681,7 +730,8 @@ function showSection(s, btn) {
     if (!allRows.length) loadData();
     else { renderAlertas(); renderCC(); }
   }
-  if (s === 'estoque') loadEstoque(false);
+  if (s === 'estoque')   loadEstoque(false);
+  if (s === 'reimpress') loadReimpress(false);
 }
 
 /* ══════════════════════════════════════════
@@ -1757,6 +1807,142 @@ function filtrarEstoque(q) {
 /* ══════════════════════════════════════════
    INIT
 ══════════════════════════════════════════ */
+/* ══════════════════════════════════════════
+   REIMPRESSÕES
+══════════════════════════════════════════ */
+const IMPRESS_URL   = 'https://script.google.com/macros/s/AKfycbxyDSx1rsHN6PQw4MciLBLnDWHU9GnzfqreBPKnExcn_G0eeaMy_0T07n0hCR617_Br/exec';
+let impressRows     = [];
+let impressLoaded   = false;
+
+async function loadReimpress(force=false) {
+  if (impressLoaded && !force) return;
+  const btn = document.getElementById('btn-reload-reimpress');
+  if (btn) btn.classList.add('spinning');
+  document.getElementById('reimpress-container').innerHTML =
+    '<div class="state-box" style="padding:40px"><div class="spinner"></div></div>';
+  document.getElementById('reimpress-stats').innerHTML = '';
+  try {
+    const res  = await fetch(IMPRESS_URL + '?action=impress', { cache:'no-store' });
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.msg || 'Erro no servidor');
+    impressRows  = data.itens || [];
+    impressLoaded = true;
+    // Popula anos dinamicamente
+    const anos = [...new Set(impressRows.map(r => {
+      const p = String(r['Data']||'').split('/');
+      return p.length===3 ? p[2] : '';
+    }).filter(Boolean))].sort((a,b)=>b-a);
+    const selAno = document.getElementById('reimpress-ano');
+    selAno.innerHTML = '<option value="">Todos os anos</option>';
+    anos.forEach(a => selAno.innerHTML += `<option value="${a}">${a}</option>`);
+    const now = new Date().toLocaleString('pt-BR');
+    document.getElementById('reimpress-atualizado').textContent = `Última atualização: ${now}`;
+    filtrarReimpress();
+  } catch(e) {
+    document.getElementById('reimpress-container').innerHTML =
+      `<div class="state-box" style="padding:40px;text-align:center;color:var(--red)">❌ Erro ao carregar reimpressões.<br><small style="color:var(--gray-400);font-size:11px;margin-top:6px;display:block">${e.message}</small></div>`;
+  }
+  if (btn) btn.classList.remove('spinning');
+}
+
+function filtrarReimpress() {
+  const mes = document.getElementById('reimpress-mes').value;
+  const ano = document.getElementById('reimpress-ano').value;
+  const filtradas = impressRows.filter(r => {
+    const p = String(r['Data']||'').split('/');
+    if (p.length !== 3) return false;
+    if (mes && p[1] !== mes) return false;
+    if (ano && p[2] !== ano) return false;
+    return true;
+  });
+  renderReimpress(filtradas);
+}
+
+function parseTempo(str) {
+  // Suporta "1:30:00", "01:30", "90" (minutos), "1h30m"
+  if (!str) return 0;
+  const s = String(str).trim();
+  const hm = s.match(/^(\d+):(\d+)(?::(\d+))?$/);
+  if (hm) return parseInt(hm[1])*60 + parseInt(hm[2]);
+  const hms = s.match(/(\d+)\s*h\s*(\d+)?/i);
+  if (hms) return parseInt(hms[1])*60 + (parseInt(hms[2])||0);
+  const n = parseFloat(s.replace(',','.'));
+  return isNaN(n) ? 0 : Math.round(n);
+}
+
+function formatTempo(min) {
+  if (!min) return '—';
+  const h = Math.floor(min/60), m = min%60;
+  if (h > 0) return `${h}h ${m>0?m+'min':''}`.trim();
+  return `${m}min`;
+}
+
+function parseTamanho(str) {
+  if (!str) return 0;
+  const n = parseFloat(String(str).replace(',','.').replace(/[^\d.]/g,''));
+  return isNaN(n) ? 0 : n;
+}
+
+function renderReimpress(rows) {
+  if (!rows.length) {
+    document.getElementById('reimpress-stats').innerHTML = '';
+    document.getElementById('reimpress-container').innerHTML =
+      '<div class="state-box" style="padding:40px;text-align:center;color:var(--gray-400)">Nenhum registro encontrado para o período selecionado.</div>';
+    return;
+  }
+
+  // Totais gerais
+  const totalTamanho = rows.reduce((a,r) => a + parseTamanho(r['Tamanho']), 0);
+  const totalTempo   = rows.reduce((a,r) => a + parseTempo(r['Tempo']), 0);
+
+  document.getElementById('reimpress-stats').innerHTML = `
+    <div class="reimpress-stats">
+      <div class="est-stat"><div class="est-stat-label">🖨️ Total de Registros</div><div class="est-stat-val">${rows.length}</div></div>
+      <div class="est-stat blue"><div class="est-stat-label">📐 Tamanho Total</div><div class="est-stat-val">${totalTamanho.toLocaleString('pt-BR')} m</div></div>
+      <div class="est-stat baixo"><div class="est-stat-label">⏱️ Tempo Total</div><div class="est-stat-val">${formatTempo(totalTempo)}</div></div>
+    </div>`;
+
+  // Agrupa por Local
+  const grupos = {};
+  rows.forEach(r => {
+    const local = (r['Local']||'Sem Local').trim();
+    if (!grupos[local]) grupos[local] = [];
+    grupos[local].push(r);
+  });
+
+  let html = '';
+  Object.entries(grupos).sort((a,b)=>a[0].localeCompare(b[0])).forEach(([local, itens]) => {
+    const tam  = itens.reduce((a,r) => a + parseTamanho(r['Tamanho']), 0);
+    const temp = itens.reduce((a,r) => a + parseTempo(r['Tempo']), 0);
+    html += `
+      <div class="reimpress-group">
+        <div class="reimpress-group-header">
+          <div class="reimpress-group-title">🏷️ ${local} <span style="font-weight:400;font-size:12px;color:var(--gray-400)">(${itens.length} registro${itens.length>1?'s':''})</span></div>
+          <div class="reimpress-group-badges">
+            <span class="reimpress-badge blue">📐 ${tam.toLocaleString('pt-BR')} m impressos</span>
+            <span class="reimpress-badge orange">⏱️ ${formatTempo(temp)} gastos</span>
+          </div>
+        </div>
+        <table class="reimpress-table">
+          <thead><tr>
+            <th>Data</th><th>Tamanho</th><th>Tempo</th><th>Motivo</th><th>Observação</th>
+          </tr></thead>
+          <tbody>`;
+    itens.forEach(r => {
+      html += `<tr>
+        <td>${r['Data']||'—'}</td>
+        <td>${r['Tamanho']||'—'}</td>
+        <td>${r['Tempo']||'—'}</td>
+        <td>${r['Motivo']||'—'}</td>
+        <td>${r['Observacao']||'—'}</td>
+      </tr>`;
+    });
+    html += `</tbody></table></div>`;
+  });
+
+  document.getElementById('reimpress-container').innerHTML = html;
+}
+
 renderLoading();
 loadData();
 </script>
