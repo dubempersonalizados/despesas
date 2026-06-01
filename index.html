@@ -285,6 +285,18 @@
     .reimpress-table tr:hover td { background:var(--gray-50); }
     .reimpress-obs { font-size:11px; color:var(--gray-400); margin-top:3px; font-style:italic; }
 
+    /* ── MARQUEE BÍBLICO ── */
+    .marquee-wrap { background:linear-gradient(90deg,var(--navy-light),#1e4d8c,var(--navy-light)); overflow:hidden; white-space:nowrap; padding:7px 0; border-bottom:2px solid var(--orange); position:relative; }
+    .marquee-wrap::before,.marquee-wrap::after { content:''; position:absolute; top:0; width:60px; height:100%; z-index:2; }
+    .marquee-wrap::before { left:0; background:linear-gradient(90deg,var(--navy),transparent); }
+    .marquee-wrap::after  { right:0; background:linear-gradient(270deg,var(--navy),transparent); }
+    .marquee-track { display:inline-block; animation:marquee-scroll 120s linear infinite; }
+    .marquee-track:hover { animation-play-state:paused; }
+    @keyframes marquee-scroll { 0%{transform:translateX(0)} 100%{transform:translateX(-50%)} }
+    .marquee-item { display:inline-block; padding:0 48px; font-size:12px; color:rgba(255,255,255,.92); font-family:'DM Sans',sans-serif; letter-spacing:.3px; }
+    .marquee-item .ref { color:var(--orange); font-weight:600; margin-left:8px; font-size:11px; }
+    .marquee-sep { display:inline-block; color:var(--orange); opacity:.6; font-size:14px; vertical-align:middle; }
+
     /* ── RESPONSIVE ── */
     @media(max-width:700px){
       .header{padding:12px 16px;flex-wrap:wrap;gap:10px;}
@@ -319,6 +331,11 @@
       </nav>
     </div>
   </header>
+
+  <!-- MARQUEE BÍBLICO -->
+  <div class="marquee-wrap">
+    <div class="marquee-track" id="marquee-track"></div>
+  </div>
 
   <!-- BANNER DE ALERTAS -->
   <div id="alerta-banner" class="alerta-banner hidden" onclick="showSection('relatorios', document.querySelectorAll('.nav-btn')[2]); setTimeout(()=>document.getElementById('sec-alertas').scrollIntoView({behavior:'smooth'}),100)">
@@ -1942,6 +1959,375 @@ function renderReimpress(rows) {
 
   document.getElementById('reimpress-container').innerHTML = html;
 }
+
+/* ══════════════════════════════════════════
+   MARQUEE BÍBLICO
+══════════════════════════════════════════ */
+(function initMarquee() {
+  const versiculos = [
+    // ── Antigo Testamento: Gênesis ──
+    { texto: 'No princípio, criou Deus os céus e a terra.', ref: 'Gênesis 1:1' },
+    { texto: 'E criou Deus o homem à sua imagem; à imagem de Deus o criou.', ref: 'Gênesis 1:27' },
+    { texto: 'O Senhor Deus formou o homem do pó da terra e soprou em suas narinas o fôlego de vida.', ref: 'Gênesis 2:7' },
+    { texto: 'Eu estabeleço a minha aliança convosco: nunca mais toda a carne será destruída pelas águas do dilúvio.', ref: 'Gênesis 9:11' },
+    { texto: 'Abraão creu em Deus e isso lhe foi imputado como justiça.', ref: 'Gênesis 15:6' },
+    // ── Êxodo ──
+    { texto: 'Eu sou o Senhor teu Deus; não terás outros deuses diante de mim.', ref: 'Êxodo 20:2-3' },
+    { texto: 'Honra teu pai e tua mãe, para que se prolonguem os teus dias na terra.', ref: 'Êxodo 20:12' },
+    { texto: 'O Senhor é o meu estandarte.', ref: 'Êxodo 17:15' },
+    // ── Números ──
+    { texto: 'O Senhor te abençoe e te guarde; o Senhor faça resplandecer o seu rosto sobre ti.', ref: 'Números 6:24-25' },
+    // ── Deuteronômio ──
+    { texto: 'Amarás o Senhor teu Deus de todo o teu coração, de toda a tua alma e de toda a tua força.', ref: 'Deuteronômio 6:5' },
+    { texto: 'Sede fortes e corajosos. Não temais, nem vos assusteis, porque o Senhor teu Deus é contigo.', ref: 'Deuteronômio 31:6' },
+    { texto: 'Escolhe, pois, a vida, para que vivas tu e a tua descendência.', ref: 'Deuteronômio 30:19' },
+    // ── Josué ──
+    { texto: 'Sede fortes e corajosos. Não temais, nem vos assusteis.', ref: 'Josué 1:9' },
+    { texto: 'Quanto a mim e à minha casa, serviremos ao Senhor.', ref: 'Josué 24:15' },
+    { texto: 'Este livro da lei não se apartará da tua boca; medita nele de dia e de noite.', ref: 'Josué 1:8' },
+    // ── Rute ──
+    { texto: 'Onde tu morreres, morrerei eu, e ali serei sepultada. Assim me faça o Senhor e outro tanto.', ref: 'Rute 1:17' },
+    // ── 1 Samuel ──
+    { texto: 'Porque o Senhor não vê como vê o homem; o homem vê o exterior, porém o Senhor olha para o coração.', ref: '1 Samuel 16:7' },
+    { texto: 'A obediência é melhor do que o sacrifício.', ref: '1 Samuel 15:22' },
+    // ── 2 Samuel ──
+    { texto: 'O Senhor é a minha rocha, a minha fortaleza e o meu libertador.', ref: '2 Samuel 22:2' },
+    // ── 1 Reis ──
+    { texto: 'O Senhor Deus de Israel vive, diante de quem estou.', ref: '1 Reis 17:1' },
+    // ── 1 Crônicas ──
+    { texto: 'Sede fortes, animai-vos; não temais, nem vos espanteis, porque o Senhor Deus é convosco.', ref: '1 Crônicas 28:20' },
+    { texto: 'Tua, Senhor, é a grandeza, o poder, a glória, a vitória e a majestade.', ref: '1 Crônicas 29:11' },
+    // ── Neemias ──
+    { texto: 'A alegria do Senhor é a nossa força.', ref: 'Neemias 8:10' },
+    // ── Jó ──
+    { texto: 'O Senhor o deu e o Senhor o tomou; bendito seja o nome do Senhor.', ref: 'Jó 1:21' },
+    { texto: 'Eu sei que o meu Redentor vive e por fim se levantará sobre o pó.', ref: 'Jó 19:25' },
+    // ── Salmos ──
+    { texto: 'O Senhor é o meu pastor e nada me faltará.', ref: 'Salmos 23:1' },
+    { texto: 'Ainda que eu ande pelo vale da sombra da morte, não temerei mal nenhum, pois tu estás comigo.', ref: 'Salmos 23:4' },
+    { texto: 'O Senhor é a minha luz e a minha salvação; a quem temerei?', ref: 'Salmos 27:1' },
+    { texto: 'Entrega o teu caminho ao Senhor; confia nele, e ele tudo fará.', ref: 'Salmos 37:5' },
+    { texto: 'Deleita-te também no Senhor, e ele te concederá os desejos do teu coração.', ref: 'Salmos 37:4' },
+    { texto: 'Deus é o nosso refúgio e fortaleza, socorro bem presente na angústia.', ref: 'Salmos 46:1' },
+    { texto: 'Cria em mim, ó Deus, um coração puro e renova em mim um espírito reto.', ref: 'Salmos 51:10' },
+    { texto: 'Lança sobre o Senhor o teu peso, e ele te susterá.', ref: 'Salmos 55:22' },
+    { texto: 'Quando eu tiver medo, em ti confiarei.', ref: 'Salmos 56:3' },
+    { texto: 'Cantarei ao Senhor enquanto viver; cantarei louvores ao meu Deus enquanto eu existir.', ref: 'Salmos 104:33' },
+    { texto: 'O princípio da sabedoria é o temor do Senhor.', ref: 'Salmos 111:10' },
+    { texto: 'Bendize, ó minha alma, ao Senhor, e tudo o que há em mim bendiga o seu santo nome.', ref: 'Salmos 103:1' },
+    { texto: 'Como o cervo anseia pelas correntes das águas, assim a minha alma anseia por ti, ó Deus.', ref: 'Salmos 42:1' },
+    { texto: 'A tua palavra é lâmpada que ilumina os meus passos e luz que clareia o meu caminho.', ref: 'Salmos 119:105' },
+    { texto: 'O Senhor guardará a tua saída e a tua entrada, desde agora e para sempre.', ref: 'Salmos 121:8' },
+    { texto: 'Louvai ao Senhor, porque ele é bom; porque a sua misericórdia dura para sempre.', ref: 'Salmos 136:1' },
+    { texto: 'Magnifico-te porque de modo assombroso e maravilhoso me formaste.', ref: 'Salmos 139:14' },
+    { texto: 'O Senhor é justo em todos os seus caminhos e benigno em todas as suas obras.', ref: 'Salmos 145:17' },
+    { texto: 'Louvai ao Senhor, porque é boa coisa cantar louvores ao nosso Deus.', ref: 'Salmos 147:1' },
+    { texto: 'Levanto os meus olhos para os montes: de onde me virá o socorro? O meu socorro vem do Senhor.', ref: 'Salmos 121:1-2' },
+    { texto: 'Este é o dia que o Senhor fez; alegremo-nos e nos regozijemos nele.', ref: 'Salmos 118:24' },
+    { texto: 'As misericórdias do Senhor não têm fim; as suas compaixões não se esgotam; renovam-se cada manhã.', ref: 'Lamentações 3:22-23' },
+    // ── Provérbios ──
+    { texto: 'Confia no Senhor de todo o teu coração e não te estribes no teu próprio entendimento.', ref: 'Provérbios 3:5' },
+    { texto: 'Em todos os teus caminhos, reconhece-o, e ele endireitará as tuas veredas.', ref: 'Provérbios 3:6' },
+    { texto: 'O temor do Senhor é o princípio da sabedoria.', ref: 'Provérbios 9:10' },
+    { texto: 'A esperança adiada enfraquece o coração, mas o desejo realizado é árvore de vida.', ref: 'Provérbios 13:12' },
+    { texto: 'O coração do homem traça o seu caminho, mas o Senhor lhe dirige os passos.', ref: 'Provérbios 16:9' },
+    { texto: 'Melhor é o que tem pouco com justiça do que o que tem muito com injustiça.', ref: 'Provérbios 16:8' },
+    { texto: 'O nome do Senhor é uma torre forte; o justo corre para ela e está a salvo.', ref: 'Provérbios 18:10' },
+    { texto: 'Instrui o menino no caminho em que deve andar, e até quando envelhecer não se desviará dele.', ref: 'Provérbios 22:6' },
+    { texto: 'Não te orgulhes do dia de amanhã, pois não sabes o que ele trará.', ref: 'Provérbios 27:1' },
+    { texto: 'Mulher virtuosa, quem a achará? O seu valor muito excede o de rubis.', ref: 'Provérbios 31:10' },
+    // ── Eclesiastes ──
+    { texto: 'Teme a Deus e guarda os seus mandamentos; isso é o dever de todo homem.', ref: 'Eclesiastes 12:13' },
+    { texto: 'Para tudo há uma estação certa e há um tempo para todo propósito debaixo do céu.', ref: 'Eclesiastes 3:1' },
+    // ── Cantares ──
+    { texto: 'Eu sou do meu amado e o meu amado é meu.', ref: 'Cantares 6:3' },
+    // ── Isaías ──
+    { texto: 'Mas os que esperam no Senhor renovarão as suas forças, subirão com asas como águias.', ref: 'Isaías 40:31' },
+    { texto: 'Não temas, porque eu sou contigo; não te assombres, porque eu sou o teu Deus.', ref: 'Isaías 41:10' },
+    { texto: 'Eis que faço uma coisa nova; está brotando; não a percebeis?', ref: 'Isaías 43:19' },
+    { texto: 'Porque eu, o Senhor teu Deus, te sustento pela mão direita e te digo: Não temas.', ref: 'Isaías 41:13' },
+    { texto: 'Por que dizes, ó Jacó, e falas, ó Israel: O meu caminho está encoberto ao Senhor?', ref: 'Isaías 40:27' },
+    { texto: 'Consolai, consolai o meu povo, diz o vosso Deus.', ref: 'Isaías 40:1' },
+    { texto: 'A erva seca e a flor cai, mas a palavra do nosso Deus subsiste para sempre.', ref: 'Isaías 40:8' },
+    { texto: 'Ele foi desprezado e rejeitado pelos homens, homem de dores e que sabe o que é o sofrimento.', ref: 'Isaías 53:3' },
+    { texto: 'Por suas feridas fomos sarados.', ref: 'Isaías 53:5' },
+    { texto: 'Vinde, e arrazoemos, diz o Senhor; se os vossos pecados forem como a escarlata, tornar-se-ão brancos como a neve.', ref: 'Isaías 1:18' },
+    // ── Jeremias ──
+    { texto: 'Porque eu bem sei os planos que tenho a vosso respeito, planos de paz e não de mal, para vos dar um futuro e uma esperança.', ref: 'Jeremias 29:11' },
+    { texto: 'Bendito o homem que confia no Senhor e cuja esperança é o Senhor.', ref: 'Jeremias 17:7' },
+    { texto: 'Clamaste a mim, e eu te respondi; anunciei-te coisas grandes e ocultas que tu não conhecias.', ref: 'Jeremias 33:3' },
+    // ── Lamentações ──
+    { texto: 'As misericórdias do Senhor não têm fim; renovam-se cada manhã. Grande é a tua fidelidade.', ref: 'Lamentações 3:22-23' },
+    // ── Ezequiel ──
+    { texto: 'Dar-vos-ei um coração novo e porei um espírito novo dentro de vós.', ref: 'Ezequiel 36:26' },
+    // ── Daniel ──
+    { texto: 'O meu Deus enviou o seu anjo e fechou a boca dos leões.', ref: 'Daniel 6:22' },
+    { texto: 'Os que forem sábios resplandecerão como o fulgor do firmamento.', ref: 'Daniel 12:3' },
+    // ── Oséias ──
+    { texto: 'Voltai para o Senhor vosso Deus, porque ele é misericordioso e compassivo.', ref: 'Oséias 14:1' },
+    // ── Joel ──
+    { texto: 'Depois disso, derramarei o meu Espírito sobre toda a carne; os vossos filhos e as vossas filhas profetizarão.', ref: 'Joel 2:28' },
+    // ── Amós ──
+    { texto: 'Buscai o bem e não o mal, para que vivais; e assim o Senhor, Deus dos Exércitos, será convosco.', ref: 'Amós 5:14' },
+    // ── Jonas ──
+    { texto: 'A salvação vem do Senhor.', ref: 'Jonas 2:9' },
+    // ── Miquéias ──
+    { texto: 'O que o Senhor pede de ti: que pratiques a justiça, ames a misericórdia e andes humildemente com o teu Deus.', ref: 'Miquéias 6:8' },
+    // ── Habacuque ──
+    { texto: 'O justo viverá pela sua fé.', ref: 'Habacuque 2:4' },
+    { texto: 'Ainda que a figueira não floresça, eu me alegrarei no Senhor e exultarei no Deus da minha salvação.', ref: 'Habacuque 3:17-18' },
+    // ── Sofonias ──
+    { texto: 'O Senhor teu Deus está no meio de ti, poderoso para salvar; ele se deleitará em ti com alegria.', ref: 'Sofonias 3:17' },
+    // ── Ageu ──
+    { texto: 'A glória desta última casa será maior do que a da primeira, diz o Senhor dos Exércitos.', ref: 'Ageu 2:9' },
+    // ── Zacarias ──
+    { texto: 'Não por força nem por violência, mas pelo meu Espírito, diz o Senhor dos Exércitos.', ref: 'Zacarias 4:6' },
+    // ── Malaquias ──
+    { texto: 'Trazei todos os dízimos à casa do tesouro, para que haja alimento na minha casa.', ref: 'Malaquias 3:10' },
+    { texto: 'Mas para vós que temeis o meu nome, nascerá o sol da justiça, trazendo salvação nas suas asas.', ref: 'Malaquias 4:2' },
+    // ── Novo Testamento: Mateus ──
+    { texto: 'Bem-aventurados os pobres de espírito, porque deles é o reino dos céus.', ref: 'Mateus 5:3' },
+    { texto: 'Bem-aventurados os que choram, porque serão consolados.', ref: 'Mateus 5:4' },
+    { texto: 'Bem-aventurados os mansos, porque herdarão a terra.', ref: 'Mateus 5:5' },
+    { texto: 'Vós sois a luz do mundo. Não se pode esconder uma cidade edificada sobre um monte.', ref: 'Mateus 5:14' },
+    { texto: 'Buscai primeiro o reino de Deus e a sua justiça, e todas essas coisas vos serão acrescentadas.', ref: 'Mateus 6:33' },
+    { texto: 'Não andeis ansiosos pelo dia de amanhã, pois o amanhã cuidará de si mesmo.', ref: 'Mateus 6:34' },
+    { texto: 'Pedi e dar-se-vos-á; buscai e achareis; batei e abrir-se-vos-á.', ref: 'Mateus 7:7' },
+    { texto: 'Vinde a mim, todos os que estais cansados e sobrecarregados, e eu vos aliviarei.', ref: 'Mateus 11:28' },
+    { texto: 'O meu jugo é suave e o meu fardo é leve.', ref: 'Mateus 11:30' },
+    { texto: 'Amarás ao Senhor teu Deus de todo o teu coração, de toda a tua alma e de todo o teu entendimento.', ref: 'Mateus 22:37' },
+    { texto: 'Ide por todo o mundo e pregai o evangelho a toda criatura.', ref: 'Mateus 28:19' },
+    { texto: 'E eis que estou convosco todos os dias, até a consumação dos séculos.', ref: 'Mateus 28:20' },
+    // ── Marcos ──
+    { texto: 'Tudo é possível ao que crê.', ref: 'Marcos 9:23' },
+    { texto: 'Arrependei-vos e crede no evangelho.', ref: 'Marcos 1:15' },
+    { texto: 'O que Deus ajuntou não separe o homem.', ref: 'Marcos 10:9' },
+    // ── Lucas ──
+    { texto: 'Porque para Deus nenhuma coisa é impossível.', ref: 'Lucas 1:37' },
+    { texto: 'Glória a Deus nas maiores alturas, e paz na terra entre os homens em quem ele se compraz.', ref: 'Lucas 2:14' },
+    { texto: 'O Espírito do Senhor está sobre mim, porquanto me ungiu para evangelizar os pobres.', ref: 'Lucas 4:18' },
+    { texto: 'Perdoai e sereis perdoados.', ref: 'Lucas 6:37' },
+    { texto: 'O que é impossível para os homens é possível para Deus.', ref: 'Lucas 18:27' },
+    { texto: 'Porque o Filho do Homem veio buscar e salvar o perdido.', ref: 'Lucas 19:10' },
+    // ── João ──
+    { texto: 'Porque Deus amou o mundo de tal maneira que deu o seu Filho unigênito.', ref: 'João 3:16' },
+    { texto: 'Deus é Espírito, e importa que os que o adoram o adorem em espírito e em verdade.', ref: 'João 4:24' },
+    { texto: 'Eu sou o pão da vida; aquele que vem a mim não terá fome.', ref: 'João 6:35' },
+    { texto: 'Eu sou a luz do mundo; quem me segue não andará em trevas.', ref: 'João 8:12' },
+    { texto: 'E conhecereis a verdade, e a verdade vos libertará.', ref: 'João 8:32' },
+    { texto: 'Eu sou a porta; se alguém entrar por mim, será salvo.', ref: 'João 10:9' },
+    { texto: 'Eu vim para que tenham vida e a tenham em abundância.', ref: 'João 10:10' },
+    { texto: 'Eu sou a ressurreição e a vida; quem crê em mim, ainda que morra, viverá.', ref: 'João 11:25' },
+    { texto: 'Eu sou o caminho, a verdade e a vida; ninguém vem ao Pai senão por mim.', ref: 'João 14:6' },
+    { texto: 'Não se turbe o vosso coração; credes em Deus, crede também em mim.', ref: 'João 14:1' },
+    { texto: 'Paz vos deixo, a minha paz vos dou; não vo-la dou como o mundo a dá.', ref: 'João 14:27' },
+    { texto: 'Eu sou a videira verdadeira e meu Pai é o agricultor.', ref: 'João 15:1' },
+    { texto: 'Permanecei em mim, e eu permanecerei em vós.', ref: 'João 15:4' },
+    { texto: 'Nisto é glorificado meu Pai, em que deis muito fruto.', ref: 'João 15:8' },
+    { texto: 'O vosso coração se alegrará, e ninguém vos tirará a vossa alegria.', ref: 'João 16:22' },
+    { texto: 'No mundo tereis aflições; mas tende bom ânimo, eu venci o mundo.', ref: 'João 16:33' },
+    // ── Atos ──
+    { texto: 'Arrependei-vos e cada um de vós seja batizado em nome de Jesus Cristo.', ref: 'Atos 2:38' },
+    { texto: 'Em nenhum outro há salvação; porque debaixo do céu nenhum outro nome há dado entre os homens pelo qual devamos ser salvos.', ref: 'Atos 4:12' },
+    { texto: 'Cê e a tua casa sereis salvos.', ref: 'Atos 16:31' },
+    { texto: 'Porque nele vivemos, e nos movemos, e existimos.', ref: 'Atos 17:28' },
+    // ── Romanos ──
+    { texto: 'Porque todos pecaram e destituídos estão da glória de Deus.', ref: 'Romanos 3:23' },
+    { texto: 'O salário do pecado é a morte, mas o dom gratuito de Deus é a vida eterna em Cristo Jesus.', ref: 'Romanos 6:23' },
+    { texto: 'Sabemos que todas as coisas cooperam para o bem daqueles que amam a Deus.', ref: 'Romanos 8:28' },
+    { texto: 'Se Deus é por nós, quem será contra nós?', ref: 'Romanos 8:31' },
+    { texto: 'Nem a morte, nem a vida, nem anjos, nem principados nos poderão separar do amor de Deus.', ref: 'Romanos 8:38-39' },
+    { texto: 'Não vos conformeis com este século, mas transformai-vos pela renovação do vosso entendimento.', ref: 'Romanos 12:2' },
+    { texto: 'O amor não faz mal ao próximo; de modo que o cumprimento da lei é o amor.', ref: 'Romanos 13:10' },
+    { texto: 'Se é possível, quanto depender de vós, tende paz com todos os homens.', ref: 'Romanos 12:18' },
+    // ── 1 Coríntios ──
+    { texto: 'O amor é paciente, o amor é bondoso, não tem inveja, não se vangloria.', ref: '1 Coríntios 13:4' },
+    { texto: 'Agora, pois, permanecem a fé, a esperança e o amor, estes três; mas o maior destes é o amor.', ref: '1 Coríntios 13:13' },
+    { texto: 'Sede firmes e inabaláveis, sempre abundantes na obra do Senhor.', ref: '1 Coríntios 15:58' },
+    { texto: 'O vosso corpo é o templo do Espírito Santo que habita em vós.', ref: '1 Coríntios 6:19' },
+    { texto: 'Tudo posso fazer, mas nem tudo convém.', ref: '1 Coríntios 10:23' },
+    { texto: 'Vigiai, estai firmes na fé, portai-vos varonilmente e fortalecei-vos.', ref: '1 Coríntios 16:13' },
+    // ── 2 Coríntios ──
+    { texto: 'Porque andamos por fé e não por vista.', ref: '2 Coríntios 5:7' },
+    { texto: 'Se alguém está em Cristo, é uma nova criação; as coisas velhas já passaram; eis que tudo se fez novo.', ref: '2 Coríntios 5:17' },
+    { texto: 'A minha graça te basta, porque o meu poder se aperfeiçoa na fraqueza.', ref: '2 Coríntios 12:9' },
+    { texto: 'Aquele que semeia escassamente também ceifará escassamente; e aquele que semeia liberalmente também ceifará liberalmente.', ref: '2 Coríntios 9:6' },
+    // ── Gálatas ──
+    { texto: 'O fruto do Espírito é: amor, alegria, paz, longanimidade, benignidade, bondade, fidelidade.', ref: 'Gálatas 5:22' },
+    { texto: 'Não vos enganeis: de Deus não se zomba; porque tudo o que o homem semear, isso também ceifará.', ref: 'Gálatas 6:7' },
+    { texto: 'Não nos cansemos de fazer o bem, porque a seu tempo ceifaremos, se não desfalecermos.', ref: 'Gálatas 6:9' },
+    // ── Efésios ──
+    { texto: 'Porque pela graça sois salvos, por meio da fé, e isso não vem de vós; é dom de Deus.', ref: 'Efésios 2:8' },
+    { texto: 'Tomai toda a armadura de Deus, para que possais resistir no dia mau.', ref: 'Efésios 6:13' },
+    { texto: 'Sede bondosos e misericordiosos uns para com os outros, perdoando-vos mutuamente.', ref: 'Efésios 4:32' },
+    { texto: 'Àquele que é poderoso para fazer tudo muito mais abundantemente além do que pedimos ou pensamos, a esse seja a glória.', ref: 'Efésios 3:20' },
+    // ── Filipenses ──
+    { texto: 'Tudo posso naquele que me fortalece.', ref: 'Filipenses 4:13' },
+    { texto: 'A paz de Deus, que excede todo o entendimento, guardará os vossos corações e os vossos pensamentos.', ref: 'Filipenses 4:7' },
+    { texto: 'Não andeis ansiosos por coisa alguma; antes em tudo, pela oração e pela súplica, apresentai os vossos pedidos a Deus.', ref: 'Filipenses 4:6' },
+    { texto: 'Alegrai-vos sempre no Senhor; outra vez digo: alegrai-vos.', ref: 'Filipenses 4:4' },
+    { texto: 'O meu Deus suprirá todas as vossas necessidades segundo as suas riquezas em glória em Cristo Jesus.', ref: 'Filipenses 4:19' },
+    { texto: 'Tudo o que é verdadeiro, tudo o que é honesto, tudo o que é justo: nisso pensai.', ref: 'Filipenses 4:8' },
+    // ── Colossenses ──
+    { texto: 'E tudo o que fizerdes, fazei de todo o coração, como para o Senhor e não para os homens.', ref: 'Colossenses 3:23' },
+    { texto: 'Que a paz de Cristo governe em vossos corações.', ref: 'Colossenses 3:15' },
+    { texto: 'A palavra de Cristo habite em vós ricamente, em toda a sabedoria.', ref: 'Colossenses 3:16' },
+    // ── 1 Tessalonicenses ──
+    { texto: 'Orai sem cessar.', ref: '1 Tessalonicenses 5:17' },
+    { texto: 'Em tudo dai graças, porque esta é a vontade de Deus em Cristo Jesus para convosco.', ref: '1 Tessalonicenses 5:18' },
+    { texto: 'Alegrai-vos sempre.', ref: '1 Tessalonicenses 5:16' },
+    // ── 2 Tessalonicenses ──
+    { texto: 'O próprio Senhor da paz vos dê sempre a paz em todas as circunstâncias.', ref: '2 Tessalonicenses 3:16' },
+    // ── 1 Timóteo ──
+    { texto: 'A piedade com contentamento é grande ganho.', ref: '1 Timóteo 6:6' },
+    { texto: 'Não deu Deus espírito de covardia, mas de poder, de amor e de moderação.', ref: '2 Timóteo 1:7' },
+    // ── 2 Timóteo ──
+    { texto: 'Toda a Escritura é inspirada por Deus e útil para o ensino, para a repreensão e para a correção.', ref: '2 Timóteo 3:16' },
+    { texto: 'Combati o bom combate, acabei a carreira, guardei a fé.', ref: '2 Timóteo 4:7' },
+    // ── Hebreus ──
+    { texto: 'A fé é a certeza daquilo que esperamos e a prova das coisas que não vemos.', ref: 'Hebreus 11:1' },
+    { texto: 'Corramos com perseverança a carreira que nos está proposta, olhando para Jesus.', ref: 'Hebreus 12:1-2' },
+    { texto: 'Jesus Cristo é o mesmo ontem, hoje e para sempre.', ref: 'Hebreus 13:8' },
+    { texto: 'Porque a palavra de Deus é viva e eficaz, e mais cortante do que qualquer espada de dois gumes.', ref: 'Hebreus 4:12' },
+    { texto: 'Aproximemo-nos, pois, com confiança do trono da graça, para que possamos receber misericórdia.', ref: 'Hebreus 4:16' },
+    // ── Tiago ──
+    { texto: 'Se algum de vós tem falta de sabedoria, peça-a a Deus, que a todos dá liberalmente.', ref: 'Tiago 1:5' },
+    { texto: 'A fé sem obras é morta.', ref: 'Tiago 2:26' },
+    { texto: 'Sujeitai-vos a Deus; resisti ao diabo e ele fugirá de vós.', ref: 'Tiago 4:7' },
+    { texto: 'Confessai os vossos pecados uns aos outros e orai uns pelos outros, para que sareis.', ref: 'Tiago 5:16' },
+    // ── 1 Pedro ──
+    { texto: 'Lançando sobre ele toda a vossa ansiedade, porque ele tem cuidado de vós.', ref: '1 Pedro 5:7' },
+    { texto: 'Sede sóbrios e vigilantes. O diabo, vosso adversário, anda em derredor como leão que ruge.', ref: '1 Pedro 5:8' },
+    { texto: 'Vós, porém, sois raça eleita, sacerdócio real, nação santa, povo adquirido por Deus.', ref: '1 Pedro 2:9' },
+    // ── 2 Pedro ──
+    { texto: 'O Senhor não retarda a sua promessa; mas é longânimo para convosco, não querendo que nenhum pereça.', ref: '2 Pedro 3:9' },
+    // ── 1 João ──
+    { texto: 'Deus é amor, e quem permanece no amor permanece em Deus, e Deus nele.', ref: '1 João 4:16' },
+    { texto: 'Se confessarmos os nossos pecados, ele é fiel e justo para nos perdoar e purificar de toda injustiça.', ref: '1 João 1:9' },
+    { texto: 'Nós amamos porque ele nos amou primeiro.', ref: '1 João 4:19' },
+    { texto: 'O amor perfeito lança fora o temor.', ref: '1 João 4:18' },
+    { texto: 'Vede que grande amor nos concedeu o Pai, que fôssemos chamados filhos de Deus.', ref: '1 João 3:1' },
+    // ── Judas ──
+    { texto: 'Àquele que é poderoso para vos guardar de tropeçar e apresentar-vos irrepreensíveis diante da sua glória.', ref: 'Judas 1:24' },
+    // ── Apocalipse ──
+    { texto: 'Eis que estou à porta e bato; se alguém ouvir a minha voz e abrir a porta, entrarei em sua casa.', ref: 'Apocalipse 3:20' },
+    { texto: 'Sê fiel até à morte, e dar-te-ei a coroa da vida.', ref: 'Apocalipse 2:10' },
+    { texto: 'Eis que faço novas todas as coisas.', ref: 'Apocalipse 21:5' },
+    { texto: 'E enxugará Deus toda lágrima dos seus olhos, e não haverá mais morte, nem pranto, nem clamor.', ref: 'Apocalipse 21:4' },
+    { texto: 'Digno és, Senhor e Deus nosso, de receber a glória, a honra e o poder.', ref: 'Apocalipse 4:11' },
+    { texto: 'Eu sou o Alfa e o Ômega, o primeiro e o último, o princípio e o fim.', ref: 'Apocalipse 22:13' },
+    { texto: 'Vem, Senhor Jesus!', ref: 'Apocalipse 22:20' },
+  ];
+
+  // Embaralha aleatoriamente a cada carregamento
+  let fila = [...versiculos].sort(() => Math.random() - 0.5);
+  let usados = [];
+
+  function proximoVersículo() {
+    if (!fila.length) {
+      // Todos exibidos — embaralha de novo e reinicia
+      fila = [...usados].sort(() => Math.random() - 0.5);
+      usados = [];
+    }
+    return fila.shift();
+  }
+
+  const track   = document.getElementById('marquee-track');
+  const wrapper = document.querySelector('.marquee-wrap');
+  const largura = wrapper.offsetWidth || 800;
+  const VELOCIDADE = 80; // px por segundo — menor = mais lento
+
+  let posX = largura; // começa fora da tela à direita
+
+  function criarItem(v) {
+    const span = document.createElement('span');
+    span.className = 'marquee-item';
+    span.innerHTML = `✦ ${v.texto} <span class="ref">${v.ref}</span>`;
+    span.style.position  = 'absolute';
+    span.style.whiteSpace = 'nowrap';
+    span.style.left = posX + 'px';
+    track.appendChild(span);
+    usados.push(v);
+    return span;
+  }
+
+  // Limpa o track e usa posicionamento absoluto
+  track.innerHTML = '';
+  track.style.position = 'relative';
+  track.style.animation = 'none';
+  track.style.width  = '100%';
+  track.style.height = '100%';
+  wrapper.style.position = 'relative';
+  wrapper.style.height = '30px';
+  track.style.height = '30px';
+
+  let itens = [];
+  let ultimo = null;
+  let ultimaPos = largura;
+
+  // Inicia com o primeiro versículo
+  const primeiro = proximoVersículo();
+  const el0 = criarItem(primeiro);
+  itens.push({ el: el0, x: largura });
+  ultimaPos = largura;
+
+  let pausado = false;
+  wrapper.addEventListener('mouseenter', () => pausado = true);
+  wrapper.addEventListener('mouseleave', () => pausado = false);
+
+  const GAP = 120; // espaço entre versículos em px
+
+  let last = null;
+  function animar(ts) {
+    if (!last) last = ts;
+    const dt = (ts - last) / 1000;
+    last = ts;
+
+    if (!pausado) {
+      const delta = VELOCIDADE * dt;
+
+      // Move todos os itens
+      itens.forEach(item => {
+        item.x -= delta;
+        item.el.style.left = item.x + 'px';
+      });
+
+      // Remove itens que saíram completamente pela esquerda
+      itens = itens.filter(item => {
+        const w = item.el.offsetWidth;
+        if (item.x + w < 0) {
+          item.el.remove();
+          return false;
+        }
+        return true;
+      });
+
+      // Adiciona próximo versículo quando o último estiver entrando na tela
+      if (itens.length > 0) {
+        const ultimo = itens[itens.length - 1];
+        const wUltimo = ultimo.el.offsetWidth || 400;
+        const bordaDireita = ultimo.x + wUltimo;
+        if (bordaDireita < largura + GAP) {
+          const prox = proximoVersículo();
+          const novoX = Math.max(largura, bordaDireita + GAP);
+          const novoEl = document.createElement('span');
+          novoEl.className = 'marquee-item';
+          novoEl.innerHTML = `✦ ${prox.texto} <span class="ref">${prox.ref}</span>`;
+          novoEl.style.position = 'absolute';
+          novoEl.style.whiteSpace = 'nowrap';
+          novoEl.style.left = novoX + 'px';
+          track.appendChild(novoEl);
+          usados.push(prox);
+          itens.push({ el: novoEl, x: novoX });
+        }
+      }
+    }
+
+    requestAnimationFrame(animar);
+  }
+
+  requestAnimationFrame(animar);
+})();
 
 renderLoading();
 loadData();
